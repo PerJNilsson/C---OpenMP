@@ -17,6 +17,8 @@ void *cell_thread(void *arg);
 
 
 int main(int argc, char *argv[]){
+
+  // size = hardcoded number since i know how many elements it is in cell_50-file
   int size = 50;
   cellPointer = malloc(sizeof(double) *3*size);
   coordinateMatrix = malloc(sizeof(double) *size);
@@ -29,6 +31,7 @@ int main(int argc, char *argv[]){
   
   for (int i = 0; i < size; i++) {
     double n,m,l;
+    // Can't make double loop since fscanf only check each row.
     fscanf(fp_cell, "%lf %lf %lf", &n, &m, &l);
     coordinateMatrix[i][0] = n;
     coordinateMatrix[i][1] = m;
@@ -41,10 +44,10 @@ int main(int argc, char *argv[]){
 
 
 
-  
+  // Initialize  the number of threads and the thread ID.
   int nThreads, tid;
 
-  nThreads = 2;//atoi(argv[1]+2);
+  nThreads = 10;//atoi(argv[1]+2);
   omp_set_num_threads(nThreads);
   /* Fork a team of threads giving them their own copies of variables */
 #pragma omp parallel private(nThreads, tid)
@@ -52,13 +55,13 @@ int main(int argc, char *argv[]){
 
   /* Obtain thread number */
   tid = omp_get_thread_num();
-  printf("Hello World from thread = %d\n", tid);
+  printf("Hej där hälsningar tråd = %d\n", tid);
 
   /* Only master thread does this */
   if (tid == 0) 
     {
     nThreads = omp_get_num_threads();
-    printf("Number of threads = %d\n", nThreads);
+    printf("Bara mastertråden kan skriva detta = %d\n", nThreads);
     }
 
   }  /* All threads join master thread and disband */
