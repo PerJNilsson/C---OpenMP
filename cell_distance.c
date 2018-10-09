@@ -42,12 +42,12 @@ int main(int argc, char *argv[]){
 
 
   
-  int nthreads, tid;
+  int nThreads, tid;
 
-  nthreads = 2;//atoi(argv[1]+2);
-
+  nThreads = 2;//atoi(argv[1]+2);
+  omp_set_num_threads(nThreads);
   /* Fork a team of threads giving them their own copies of variables */
-#pragma omp parallel private(nthreads, tid)
+#pragma omp parallel private(nThreads, tid)
   {
 
   /* Obtain thread number */
@@ -57,8 +57,8 @@ int main(int argc, char *argv[]){
   /* Only master thread does this */
   if (tid == 0) 
     {
-    nthreads = omp_get_num_threads();
-    printf("Number of threads = %d\n", nthreads);
+    nThreads = omp_get_num_threads();
+    printf("Number of threads = %d\n", nThreads);
     }
 
   }  /* All threads join master thread and disband */
