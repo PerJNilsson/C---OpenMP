@@ -3,12 +3,14 @@
 #include <math.h>
 #include <pthread.h>
 #include <string.h>
+#include <omp.h>
 
 // Define global variables
 FILE *fp_cell;
 double ** distanceMatrix;
 double ** coordinateMatrix;
 double * cellPointer;
+
 // Initialize funtions
 void *cell_thread(void *arg);
 
@@ -26,18 +28,42 @@ int main(int argc, char *argv[]){
   fp_cell = fopen("cell_50", "r");
   
   for (int i = 0; i < size; i++) {
-    //for (int j = 0; j < 3; j++) {
-      double n,m,l;
-      fscanf(fp_cell, "%lf %lf %lf", &n, &m, &l);
-      //printf("(%d, %d) = %lf\n", i, j, n);
-      coordinateMatrix[i][0] = n;
-      coordinateMatrix[i][1] = m;
-      coordinateMatrix[i][2] = l;
+    double n,m,l;
+    fscanf(fp_cell, "%lf %lf %lf", &n, &m, &l);
+    coordinateMatrix[i][0] = n;
+    coordinateMatrix[i][1] = m;
+    coordinateMatrix[i][2] = l;
       
   }
   fclose(fp_cell);
 
 
+
+
+
+  
+  int nthreads, tid;
+
+  nthreads = 2;//atoi(argv[1]+2);
+
+  /* Fork a team of threads giving them their own copies of variables */
+#pragma omp parallel private(nthreads, tid)
+  {
+
+  /* Obtain thread number */
+  tid = omp_get_thread_num();
+  printf("Hello World from thread = %d\n", tid);
+
+  /* Only master thread does this */
+  if (tid == 0) 
+    {
+    nthreads = omp_get_num_threads();
+    printf("Number of threads = %d\n", nthreads);
+    }
+
+  }  /* All threads join master thread and disband */
+
+  
   return 0;
 }
 
