@@ -19,7 +19,7 @@ double sqrt(double x);
 int main(int argc, char *argv[]){
 
   // size = hardcoded number since i know how many elements it is in cell_50-file
-  int size = 10000;
+  int size = 100000;
   cellPointer = malloc(sizeof(double) *3*size);
   coordinateMatrix = malloc(sizeof(double) *size);
   for (size_t i=0, j=0; i<size; i++, j+=3){
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
 
 
   
-  fp_cell = fopen("cell_e4", "r");
+  fp_cell = fopen("cell_e5", "r");
   
   for (int i = 0; i < size; i++) {
     double n,m,l;
@@ -45,35 +45,29 @@ int main(int argc, char *argv[]){
     coordinateMatrix[i][2] = l;
       
   }
-  fclose(fp_cell);
-
-
+  fclose(fp_cell);  
 
   // Initialize  the number of threads and the thread ID.
   int nThreads, tid;
 
-  nThreads = 10;//atoi(argv[1]+2);
+  nThreads = 20;//atoi(argv[1]+2);
   omp_set_num_threads(nThreads);
   /* Fork a team of threads giving them their own copies of variables */
 #pragma omp parallel private(nThreads, tid)
-  {
-
-    
-  
-    for (size_t i = 0; i<size; i++){
-      for (size_t j = 0; j<size; j++){
-	double a,x,y,z;
-	distanceMatrix[i][j] = sqrt(((coordinateMatrix[i][0]-coordinateMatrix[j][0]) * (coordinateMatrix[i][0]-coordinateMatrix[j][0]))+\
+  { 
+  tid = omp_get_thread_num();
+  #pragma omp for
+  for (size_t i = 0; i<size; i++){
+    for (size_t j = 0; j<size; j++){
+      double a,x,y,z;
+      distanceMatrix[i][j] = sqrt(((coordinateMatrix[i][0]-coordinateMatrix[j][0]) * (coordinateMatrix[i][0]-coordinateMatrix[j][0]))+ \
 				    ((coordinateMatrix[i][1]-coordinateMatrix[j][1]) * (coordinateMatrix[i][1]-coordinateMatrix[j][1]))+\
 				    ((coordinateMatrix[i][2]-coordinateMatrix[j][2]) * (coordinateMatrix[i][2]-coordinateMatrix[j][2])));
 
       }
     }
-  
-
 
     	/* Obtain thread number */
-    //tid = omp_get_thread_num();
   //printf("Hej där hälsningar tråd = %d\n", tid);
 
   /* Only master thread does this */
@@ -83,7 +77,7 @@ int main(int argc, char *argv[]){
     printf("Bara mastertråden kan skriva detta = %d\n", nThreads);
     }
 
-  }  /* All threads join master thread and disband */
+ }  /* All threads join master thread and disband */
 
   
   return 0;
