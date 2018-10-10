@@ -10,24 +10,31 @@ FILE *fp_cell;
 double ** distanceMatrix;
 double ** coordinateMatrix;
 double * cellPointer;
-
+double * distancePointer;
 // Initialize funtions
 void *cell_thread(void *arg);
-
+double sqrt(double x);
 
 
 int main(int argc, char *argv[]){
 
   // size = hardcoded number since i know how many elements it is in cell_50-file
-  int size = 50;
+  int size = 10000;
   cellPointer = malloc(sizeof(double) *3*size);
   coordinateMatrix = malloc(sizeof(double) *size);
-
   for (size_t i=0, j=0; i<size; i++, j+=3){
     coordinateMatrix[i] = cellPointer + j; 
   }
+  distancePointer = malloc(sizeof(double) *size*size);
+  distanceMatrix = malloc(sizeof(double) *size);
 
-  fp_cell = fopen("cell_50", "r");
+  for (size_t i=0, j=0; i<size; i++, j+=3){
+    distanceMatrix[i] = distancePointer + j; 
+  }
+
+
+  
+  fp_cell = fopen("cell_e4", "r");
   
   for (int i = 0; i < size; i++) {
     double n,m,l;
@@ -42,8 +49,6 @@ int main(int argc, char *argv[]){
 
 
 
-
-
   // Initialize  the number of threads and the thread ID.
   int nThreads, tid;
 
@@ -53,9 +58,23 @@ int main(int argc, char *argv[]){
 #pragma omp parallel private(nThreads, tid)
   {
 
-  /* Obtain thread number */
-  tid = omp_get_thread_num();
-  printf("Hej där hälsningar tråd = %d\n", tid);
+    
+  
+    for (size_t i = 0; i<size; i++){
+      for (size_t j = 0; j<size; j++){
+	double a,x,y,z;
+	distanceMatrix[i][j] = sqrt(((coordinateMatrix[i][0]-coordinateMatrix[j][0]) * (coordinateMatrix[i][0]-coordinateMatrix[j][0]))+\
+				    ((coordinateMatrix[i][1]-coordinateMatrix[j][1]) * (coordinateMatrix[i][1]-coordinateMatrix[j][1]))+\
+				    ((coordinateMatrix[i][2]-coordinateMatrix[j][2]) * (coordinateMatrix[i][2]-coordinateMatrix[j][2])));
+
+      }
+    }
+  
+
+
+    	/* Obtain thread number */
+    //tid = omp_get_thread_num();
+  //printf("Hej där hälsningar tråd = %d\n", tid);
 
   /* Only master thread does this */
   if (tid == 0) 
