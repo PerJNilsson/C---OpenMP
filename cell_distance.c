@@ -12,8 +12,8 @@ double ** coordinateMatrix;
 double * cellPointer;
 double * distancePointer;
 // Initialize funtions
-void *cell_thread(void *arg);
 double sqrt(double x);
+double calculate_3d_distance(double point1[], double point2[])
 
 
 int main(int argc, char *argv[]){
@@ -28,13 +28,16 @@ int main(int argc, char *argv[]){
   distancePointer = malloc(sizeof(double) *size*size);
   distanceMatrix = malloc(sizeof(double) *size);
 
+
+  // förstår inte detta /e
+  // det räcker med storlek size*(size-1)/2 för distance matrix
   for (size_t i=0, j=0; i<size; i++, j+=3){
     distanceMatrix[i] = distancePointer + j; 
   }
 
 
   
-  fp_cell = fopen("cell_e5", "r");
+  fp_cell = fopen("/home/hpc2018/a3_grading/cell_e5", "r");
   
   for (int i = 0; i < size; i++) {
     double n,m,l;
@@ -49,43 +52,34 @@ int main(int argc, char *argv[]){
 
   // Initialize  the number of threads and the thread ID.
   int nThreads, tid;
-
+  
+  omp_set_dynamic(0);
   nThreads = 20;//atoi(argv[1]+2);
+
   omp_set_num_threads(nThreads);
   /* Fork a team of threads giving them their own copies of variables */
 #pragma omp parallel private(nThreads, tid)
   { 
-  tid = omp_get_thread_num();
   #pragma omp for
   for (size_t i = 0; i<size; i++){
     for (size_t j = 0; j<size; j++){
-      double a,x,y,z;
-      distanceMatrix[i][j] = sqrt(((coordinateMatrix[i][0]-coordinateMatrix[j][0]) * (coordinateMatrix[i][0]-coordinateMatrix[j][0]))+ \
-				    ((coordinateMatrix[i][1]-coordinateMatrix[j][1]) * (coordinateMatrix[i][1]-coordinateMatrix[j][1]))+\
-				    ((coordinateMatrix[i][2]-coordinateMatrix[j][2]) * (coordinateMatrix[i][2]-coordinateMatrix[j][2])));
-
+      
+      distanceMatrix[i][j] = calculate_3d_distance(coordinateMatrix[i], coordinateMatrix[j]);
+            
       }
     }
 
-    	/* Obtain thread number */
-  //printf("Hej där hälsningar tråd = %d\n", tid);
 
-  /* Only master thread does this */
-  if (tid == 0) 
-    {
-    nThreads = omp_get_num_threads();
-    printf("Bara mastertråden kan skriva detta = %d\n", nThreads);
-    }
-
- }  /* All threads join master thread and disband */
+ }
 
   
   return 0;
 }
 
 
-// Creating the function for the pthreads
-void *void_thread(void *arg){
-  struct arg_pointer *arg_s = (struct arg_pointer *)arg;
-  pthread_exit(0);
-}
+double calculate_3d_distance(double point1[], double point2[]){
+  double distance;
+  distance = sqrt( (point1[0]-point2[0])*(point1[0]-point2[0]) +\
+                   (point1[1]-point2[1])*(point1[1]-point2[1]) +\
+                   (point1[2]-point2[2])*(point1[2]-point2[2]));
+  return distance;
