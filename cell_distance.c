@@ -16,8 +16,8 @@ double sqrt(double x);
 int main(int argc, char *argv[]){
 
   // size = hardcoded number since we know how many elements it is in the file
-  char file_name[] = "cell_e5";
-  int size = 100000;
+  char file_name[] = "cell_e4";
+  int size = 10000;
   
   short maximumLengthResolution = 3466;
   cellPointer = malloc(sizeof(double) *3*size);
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]){
   fp_cell = fopen(file_name, "r");
   for (int i = 0; i < size; i++) {
       double n,m,l;
-      // Can't make double loop since fscanf only check each row.
+      // fscanf checks each row.
       fscanf(fp_cell, "%lf %lf %lf", &n, &m, &l);
       coordinateMatrix[i][0] = n;
       coordinateMatrix[i][1] = m;
