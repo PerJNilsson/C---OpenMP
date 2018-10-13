@@ -8,7 +8,7 @@
 FILE *fp_cell;
 double ** coordinateMatrix;
 double * cellPointer;
-long long * distanceArray;
+unsigned long long * distanceArray;
 // Initialize funtions
 double sqrt(double x);
 
@@ -16,8 +16,8 @@ double sqrt(double x);
 int main(int argc, char *argv[]){
 
   // size = hardcoded number since we know how many elements it is in the file
-  char file_name[] = "cell_e4";
-  int size = 10000;
+  char file_name[] = "cell_e5";
+  int size = 100000;
   
   short maximumLengthResolution = 3466;
   cellPointer = malloc(sizeof(double) *3*size);
@@ -36,11 +36,9 @@ int main(int argc, char *argv[]){
    // Initialize  the number of threads and the thread ID.
   int nThreads, tid;
 
-  nThreads = atoi(argv[1]+2);
+  nThreads = atoi(argv[1]+2); if (nThreads == 0 || nThreads> 112) {printf("Wrong argument please write -t#, # being a number"); exit(-1);}
+  printf("Number of threads: %d", nThreads);
   omp_set_num_threads(nThreads);
-  printf("Number of threads: %d\n", nThreads);
- 
-
   
   fp_cell = fopen(file_name, "r");
   for (int i = 0; i < size; i++) {
@@ -68,7 +66,7 @@ int main(int argc, char *argv[]){
       }
     }
   }
-  long long sum = 0;
+  unsigned long long sum = 0;
   
   for (int i = 0; i<maximumLengthResolution; i++) {
      if (distanceArray[i] != 0) {
@@ -78,13 +76,5 @@ int main(int argc, char *argv[]){
   }
   
   printf("The sum:%lld\n\n", sum);
-
-  double a = 4.38;
-  int aInt = 4.38*10+0.5;
-  printf("%d\n", aInt);
-
   return 0;
 }
-
-
-// Funcitons
