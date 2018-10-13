@@ -6,36 +6,31 @@
 #include <float.h>
 // Define global variables
 FILE *fp_cell;
-double ** distanceMatrix;
 double ** coordinateMatrix;
 double * cellPointer;
-double * distancePointer;
-long * shortDistanceArray;
+long long * distanceArray;
 // Initialize funtions
 double sqrt(double x);
 
 
 int main(int argc, char *argv[]){
 
-  // size = hardcoded number since i know how many elements it is in cell_50-file
-  int size = 50;
+  // size = hardcoded number since we know how many elements it is in the file
+  char file_name[] = "cell_e5";
+  int size = 10000;
+  
+  short maximumLengthResolution = 3466;
   cellPointer = malloc(sizeof(double) *3*size);
   coordinateMatrix = malloc(sizeof(double) *size);
   for (size_t i=0, j=0; i<size; i++, j+=3){
     coordinateMatrix[i] = cellPointer + j; 
   }
-  distancePointer = malloc(sizeof(double) *size*size);
-  distanceMatrix = malloc(sizeof(double) *size);
-
-  for (size_t i=0, j=0; i<size; i++, j+=3){
-    distanceMatrix[i] = distancePointer + j; 
-  }
-
-  // Each distance with 2 decimals times 100 can be saved as a short.
-  // For each distance the corresponding elemtn  in shortDistanceMatrix will +=1 
-  shortDistanceArray =malloc(sizeof(long) *3466);
-  for (size_t i = 0; i<=3465; i++){
-    shortDistanceArray[i] = 0;
+ 
+  // Each distance with 2 decimals can be saved as a short by multiplying the number with 100..
+  // For each distance the corresponding elemten in distanceMatrix will +=1 
+  distanceArray =malloc(sizeof(long) *maximumLengthResolution);
+  for (size_t i = 0; i<maximumLengthResolution; i++){
+    distanceArray[i] = 0;
   }
 
    // Initialize  the number of threads and the thread ID.
@@ -47,7 +42,7 @@ int main(int argc, char *argv[]){
  
 
   
-  fp_cell = fopen("cell_50", "r");
+  fp_cell = fopen(file_name, "r");
   /*
 #pragma omp parallel private(nThreads, tid)
   {
@@ -65,55 +60,35 @@ int main(int argc, char *argv[]){
   fclose(fp_cell);  
 
   /* Fork a team of threads giving them their own copies of variables */
-  #pragma omp parallel private(nThreads, tid)
-  { 
-  tid = omp_get_thread_num();
-  #pragma omp for
+     //tid = omp_get_thread_num();
+  //#pragma omp for
+#pragma omp parallel for reduction(+:distanceArray[:maximumLengthResolution])
   for (int i = 0; i<size; i++){
-    for (int j = 0; j<size; j++){
-      double tmpDouble;
-      tmpDouble = sqrt(((coordinateMatrix[i][0]-coordinateMatrix[j][0]) * (coordinateMatrix[i][0]-coordinateMatrix[j][0]))+\
+    for (int j = 0; j<size, j!=i; j++){
+      int tmpShortDistance =0;
+      tmpShortDistance =100*sqrt(((coordinateMatrix[i][0]-coordinateMatrix[j][0]) * (coordinateMatrix[i][0]-coordinateMatrix[j][0]))+ \
 		       ((coordinateMatrix[i][1]-coordinateMatrix[j][1]) * (coordinateMatrix[i][1]-coordinateMatrix[j][1]))+\
 		       ((coordinateMatrix[i][2]-coordinateMatrix[j][2]) * (coordinateMatrix[i][2]-coordinateMatrix[j][2])));
-      distanceMatrix[i][j] = tmpDouble;
-      }
-  }
-    	/* Obtain thread number */
-  //printf("Hej där hälsningar tråd = %d\n", tid);
+      //#pragma omp critical (function_critical_section)
+      
+      //counter+=1;
+      {
+	distanceArray[tmpShortDistance] +=1;
 
-  /* Only master thread does this
-  if (tid == 0) 
-    {
-    nThreads = omp_get_num_threads();
-    printf("Bara mastertråden kan skriva detta = %d\n", nThreads);
-    }
-*/
-  }  /* All threads join master thread and disband */
-
-  /*
-#pragma omp parallel private(nThreads, tid)
-  {
-
-  }
-  */
- 
-  for (size_t i=0; i<size; i++){
-    int index1, index2;
-    double tmpMinValue = 40.0;
-    for (size_t j=0; j<size; j++){
-      for (size_t k=0; k<size; k++){
-	if ( distanceMatrix[j][k] < tmpMinValue && j!=k) {
-	  tmpMinValue = distanceMatrix[j][k];
-	  index1 = j;
-	  index2 = k;
-	}
       }
     }
-    printf("%lf\n", tmpMinValue);
-    distanceMatrix[index1][index2] = 40.0;
+  } /* All threads join master thread and disband */
+
+  long long sum = 0;
+  
+  for (int i = 0; i<maximumLengthResolution; i++) {
+     if (distanceArray[i] != 0) {
+      printf("%.2f  %d\n", i/100.0, distanceArray[i]);
       }
+    sum = sum +distanceArray[i];
+  }
   
-  
+  printf("The sum:%lld\n\n", sum);
   return 0;
 }
 
