@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
 
   // size = hardcoded number since we know how many elements it is in the file
   char file_name[] = "cell_e5";
-  int size = 10000;
+  int size = 100000;
   
   short maximumLengthResolution = 3466;
   cellPointer = malloc(sizeof(double) *3*size);
@@ -43,12 +43,7 @@ int main(int argc, char *argv[]){
 
   
   fp_cell = fopen(file_name, "r");
-  /*
-#pragma omp parallel private(nThreads, tid)
-  {
-    tid = omp_get_thread_num();
-    #pragma omp for*/
-    for (int i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) {
       double n,m,l;
       // Can't make double loop since fscanf only check each row.
       fscanf(fp_cell, "%lf %lf %lf", &n, &m, &l);
@@ -56,29 +51,23 @@ int main(int argc, char *argv[]){
       coordinateMatrix[i][1] = m;
       coordinateMatrix[i][2] = l;  
     }
-    //}
   fclose(fp_cell);  
 
-  /* Fork a team of threads giving them their own copies of variables */
-     //tid = omp_get_thread_num();
-  //#pragma omp for
+  // Initializing parallel threading with reduction as stated above
 #pragma omp parallel for reduction(+:distanceArray[:maximumLengthResolution])
   for (int i = 0; i<size; i++){
-    for (int j = 0; j<size, j!=i; j++){
+    for (int j = 0; j<i; j++){
       int tmpShortDistance =0;
-      tmpShortDistance =100*sqrt(((coordinateMatrix[i][0]-coordinateMatrix[j][0]) * (coordinateMatrix[i][0]-coordinateMatrix[j][0]))+ \
+      tmpShortDistance =0.5+100*sqrt(((coordinateMatrix[i][0]-coordinateMatrix[j][0]) * (coordinateMatrix[i][0]-coordinateMatrix[j][0]))+ \
 		       ((coordinateMatrix[i][1]-coordinateMatrix[j][1]) * (coordinateMatrix[i][1]-coordinateMatrix[j][1]))+\
 		       ((coordinateMatrix[i][2]-coordinateMatrix[j][2]) * (coordinateMatrix[i][2]-coordinateMatrix[j][2])));
-      //#pragma omp critical (function_critical_section)
       
-      //counter+=1;
       {
 	distanceArray[tmpShortDistance] +=1;
 
       }
     }
-  } /* All threads join master thread and disband */
-
+  }
   long long sum = 0;
   
   for (int i = 0; i<maximumLengthResolution; i++) {
@@ -89,6 +78,11 @@ int main(int argc, char *argv[]){
   }
   
   printf("The sum:%lld\n\n", sum);
+
+  double a = 4.38;
+  int aInt = 4.38*10+0.5;
+  printf("%d\n", aInt);
+
   return 0;
 }
 
