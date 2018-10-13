@@ -16,7 +16,7 @@ double sqrt(double x);
 int main(int argc, char *argv[]){
 
   // size = hardcoded number since we know how many elements it is in the file
-  char file_name[] = "cell_e5";
+  char file_name[] = "cell.txt";
   int size = 100000;
   
   short maximumLengthResolution = 3466;
@@ -34,10 +34,9 @@ int main(int argc, char *argv[]){
   }
 
    // Initialize  the number of threads and the thread ID.
-  int nThreads, tid;
+  int nThreads;
 
   nThreads = atoi(argv[1]+2); if (nThreads == 0 || nThreads> 112) {printf("Wrong argument please write -t#, # being a number"); exit(-1);}
-  printf("Number of threads: %d", nThreads);
   omp_set_num_threads(nThreads);
   
   fp_cell = fopen(file_name, "r");
@@ -72,9 +71,7 @@ int main(int argc, char *argv[]){
      if (distanceArray[i] != 0) {
       printf("%.2f  %d\n", i/100.0, distanceArray[i]);
       }
-    sum = sum +distanceArray[i];
   }
   
-  printf("The sum:%lld\n\n", sum);
   return 0;
 }
