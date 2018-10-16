@@ -76,10 +76,10 @@ The dynamic scheduling will divide the payload for each thread equally, which is
   
   for (int i = 0; i<maximumLengthResolution; i++) {
     if (distanceArray[i] != 0 && i < 1000) {
-      printf("%.2f  %d\n", i/100.0, distanceArray[i]);
+      printf("%.2f %i\n", i/100.0, distanceArray[i]);
     }
-    else if (distanceArray[i] !=0) {
-      printf("%.2f %d\n", i/100.0, distanceArray[i]);
+    if (distanceArray[i] !=0 && i >= 1000) {
+      printf("%.2f %i\n", i/100.0, distanceArray[i]);
     }
   }
   
