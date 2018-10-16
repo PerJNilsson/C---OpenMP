@@ -14,7 +14,6 @@ double sqrt(double x);
 int main(int argc, char *argv[]){
 
   char file_name[] = "cells";
-  //printf("\nFile name is: %s\n\n", file_name);
 
   fp_cell = fopen(file_name, "r");
   fseek(fp_cell,0, SEEK_END);
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]){
   
   /* Initializing parallel threading with reduction meaning the shared array distanceArray will have all its elements from each thread summed up after all threads are finished with their computations.
 The dynamic scheduling will divide the payload for each thread equally, which is necessary since our first row barely have any comupations and our last rows have a lot of computations. */
-#pragma omp parallel for schedule(dynamic,1) reduction(+:distanceArray[:maximumLengthResolution])
+#pragma omp parallel for schedule(dynamic) reduction(+:distanceArray[:maximumLengthResolution])
   for (int i = 0; i<size; i++){
     for (int j = 0; j<i; j++){
       int tmpShortDistance =0;
@@ -76,10 +75,10 @@ The dynamic scheduling will divide the payload for each thread equally, which is
   
   for (int i = 0; i<maximumLengthResolution; i++) {
     if (distanceArray[i] != 0 && i < 1000) {
-      printf("%.2f %i\n", i/100.0, distanceArray[i]);
+      printf("0%.2f %d\n", i/100.0, distanceArray[i]);
     }
-    if (distanceArray[i] !=0 && i >= 1000) {
-      printf("%.2f %i\n", i/100.0, distanceArray[i]);
+    else if (distanceArray[i] !=0/* && i >= 1000*/) {
+      printf("%.2f %d\n", i/100.0, distanceArray[i]);
     }
   }
   
