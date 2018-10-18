@@ -1,4 +1,12 @@
-all: 	read_file
+.PHONY: all
 
-read_file:	read_file.c
-	gcc -o read_file read_file.c -march=native -O2
+all:	cell_distance
+
+
+cell_distance:	cell_distance.c
+	gcc -o cell_distance cell_distance.c -march=native -O3 -fopenmp -lm
+
+
+clean:
+	rm cell_distance
+
