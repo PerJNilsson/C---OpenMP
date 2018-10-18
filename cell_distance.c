@@ -12,7 +12,7 @@ double (*block1)[3];
 
 unsigned long long * distance_arr;
 
-int block_size;
+size_t block_size;
 unsigned long long file_size;
 int number_of_blocks;
 size_t max_index;
