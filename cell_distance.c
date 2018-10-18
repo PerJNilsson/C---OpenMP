@@ -16,7 +16,6 @@ size_t block_size;
 unsigned long long file_size;
 int number_of_blocks;
 size_t max_index;
-int number_of_threads;
 
 int chars_per_line = 24;
 
@@ -37,7 +36,7 @@ int main(int argc, char *argv[]){
     exit(-1);
   }
 
-  number_of_threads = atoi(argv[1]+2);
+  int number_of_threads = atoi(argv[1]+2);
 
   if (number_of_threads == 0 || number_of_threads> 112){
     printf("Wrong argument please write -t#, 0<#<112 being an integer.");
