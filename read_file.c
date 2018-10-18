@@ -1,68 +1,290 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <pthread.h>
 #include <string.h>
 #include <omp.h>
 
 
 FILE * fp_cell;
-double ** coordinateMatrix;
-double * cellPointer;
+
+double (*block0)[3];
+//double * block0entries;
+
+double (*block1)[3];
+//double * block1entries;
+
+unsigned long long * distance_arr;
+
+int block_size;
+unsigned long long file_size;
+int number_of_blocks;
+size_t max_index;
+int number_of_threads;
+
+int chars_per_line = 24;
 
 int count_lines();
+void print_results();
+double calculate_distance(double * p0, double * p1);
+void calculate_internal(int block_choice, int block_number);
+void calculate_pairwise(int block_nr0, int block_nr1);
+void read_block(int block_choice, int block_number);
+void use_single_block();
+void use_multiple_blocks();
+void read_full_file();
 
 int main(int argc, char *argv[]){
 
-  int size;
-
-
-  cellPointer = malloc(sizeof(double) *3*size);
-  coordinateMatrix = malloc(sizeof(double) *size);
-  for (size_t i=0, j=0; i<size; i++, j+=3){
-    coordinateMatrix[i] = cellPointer + j; 
-  }
+  number_of_threads = atoi(argv[1]+2);
+  omp_set_num_threads(number_of_threads);
 
   fp_cell = fopen("/home/hpc2018/a3_grading/test_data/cell_e5", "r");
 
-  size = count_lines();
+  file_size = count_lines();
 
+  max_index = 100*sqrt(3*20*20)+5; //5 for safety
+  distance_arr = calloc(max_index, sizeof(unsigned long long));
 
-  for (int i = 0; i < size; i++) {
-    double n,m,l;
-    // Can't make double loop since fscanf only check each row.
-    fscanf(fp_cell, "%lf %lf %lf", &n, &m, &l);
-    coordinateMatrix[i][0] = n;
-    coordinateMatrix[i][1] = m;
-    coordinateMatrix[i][2] = l;
+  int max_bytes = 1e9;
+  
+  block_size = max_bytes/(2*sizeof(double));
+
+  number_of_blocks = file_size/block_size+1;
+
+    
+  if(number_of_blocks<=2){
+    use_single_block();
+  } else {
+    use_multiple_blocks();
   }
 
   fclose(fp_cell);
-  
-  printf("%d", size);
 
+  print_results();
+
+  free(block0);
+  //free(block0entries);
+  free(block1);
+  //free(block1entries);
+  free(distance_arr);
 
   return 0;
+
 }
+
+
+void use_multiple_blocks(){
+
+  //block0entries = malloc(sizeof(double) *3*block_size);
+  block0 = malloc(sizeof(double) *3*block_size);
+
+  //block1entries = malloc(sizeof(double) *3*block_size);
+  block1 = malloc(sizeof(double) *3*block_size);
+
+  /*
+  for (size_t i=0, j=0; i<block_size; i++, j+=3){
+    block0[i] = block0entries + j; 
+    block1[i] = block1entries + j; 
+  }
+  */
+  
+  for(size_t i = 0; i<number_of_blocks; ++i){
+    read_block(0,i);
+    calculate_internal(0,i);
+    for(size_t j = i+1; j<number_of_blocks; ++j){
+      read_block(1,j);
+      calculate_pairwise(i,j);
+    }      
+  }
+
+  calculate_internal(1,number_of_blocks-1);
+
+}
+
+void use_single_block(){
+
+  //block0entries = malloc(sizeof(double) *3*file_size);
+  block0 = malloc(sizeof(double) *3*file_size);
+
+  /*
+  for (size_t i=0, j=0; i<file_size; i++, j+=3){
+    block0[i] = block0entries + j; 
+  }
+  */
+  read_full_file();
+
+  size_t distance_index;
+
+  omp_set_num_threads(number_of_threads);
+
+
+#pragma omp parallel for schedule(dynamic) private(distance_index) reduction(+:distance_arr[:max_index])
+  for(size_t i = 0; i<file_size; ++i){
+    for(size_t j = i+1; j<file_size; ++j){
+      distance_index = 0.5+100*calculate_distance(block0[i], block0[j]);
+      distance_arr[distance_index] += 1;
+    }
+  }
+
+
+}
+
+
+
 
 
 
 
 int count_lines(){
 
-  int size=0;
-  char ch;
-  
-  do{
-    ch = fgetc(fp_cell);
-    if(ch == '\n'){
-      size++;
-    }
-  } while (ch != EOF);
+  int len=0;
 
-  return size;
+  fseek(fp_cell, 0, SEEK_END);
+  len = ftell(fp_cell);
+  fseek(fp_cell, 0, SEEK_SET);
+  return len/chars_per_line;
     
 }
 
+void read_full_file(){
 
+  double n,m,l;  
+
+  fseek(fp_cell, 0, SEEK_SET);
   
+  for (size_t i = 0; i < file_size; i++) {
+
+    fscanf(fp_cell, "%lf %lf %lf", &n, &m, &l);
+    block0[i][0] = n;
+    block0[i][1] = m;
+    block0[i][2] = l;
+  }
+
+}
+
+
+void read_block(int block_choice, int block_number){
+
+  double (*block)[3];
+
+  switch(block_choice){
+  case 0:
+    block = block0;
+    break;
+  case 1:
+    block = block1;
+    break;
+  default:
+    printf("ILLEGAL BLOCK CHOICE");
+    return;
+  }
+
+  size_t start_index = block_number*block_size;
+  size_t end_index;
+  
+  if(block_number==number_of_blocks-1){
+    end_index = file_size-(number_of_blocks-1)*block_size;
+  } else {
+    end_index = block_size;
+  }
+  
+  double n,m,l;  
+
+  size_t current_position = ftell(fp_cell);
+  long move_number = start_index*chars_per_line - current_position;
+  
+  fseek(fp_cell, move_number, SEEK_CUR);
+  
+  for (size_t i = 0; i < end_index; i++) {
+
+    fscanf(fp_cell, "%lf %lf %lf", &n, &m, &l);
+    block[i][0] = n;
+    block[i][1] = m;
+    block[i][2] = l;
+  }
+
+}
+
+void calculate_internal(int block_choice, int block_number){
+
+  double (*block)[3];
+
+  switch(block_choice){
+  case 0:
+    block = block0;
+    break;
+  case 1:
+    block = block1;
+    break;
+  default:
+    printf("ILLEGAL BLOCK CHOICE");
+    return;
+  }
+
+  size_t end_index;
+  
+  if(block_number==number_of_blocks-1){
+    end_index = file_size-(number_of_blocks-1)*block_size;
+  } else {
+    end_index = block_size;
+  }  
+
+
+  size_t distance_index;
+  
+#pragma omp parallel for schedule(dynamic) private(distance_index) reduction(+:distance_arr[:max_index])
+  for(size_t i = 0; i<end_index; ++i){
+    for(size_t j = i+1; j<end_index; ++j){
+      distance_index = 0.5+100*calculate_distance(block[i], block[j]);
+      distance_arr[distance_index] += 1;
+    }
+  }
+
+}
+
+
+void calculate_pairwise(int block_nr0, int block_nr1){
+
+  size_t end_index;
+  
+  if(block_nr1==number_of_blocks-1){
+    end_index = file_size-(number_of_blocks-1)*block_size;
+  } else {
+    end_index = block_size;
+  }
+
+  size_t distance_index;
+
+#pragma omp parallel for private(distance_index) reduction(+:distance_arr[:max_index])
+  for(size_t i=0; i<block_size; ++i){
+    for(size_t j = 0; j<end_index; ++j){
+      distance_index = 0.5+100*calculate_distance(block0[i], block1[j]);
+      distance_arr[distance_index] += 1;
+    }
+  }
+
+}
+
+
+double calculate_distance(double * p0, double * p1){
+  double distance;
+
+  distance = sqrt( (p0[0]-p1[0])*(p0[0]-p1[0]) + \
+                   (p0[1]-p1[1])*(p0[1]-p1[1]) + \
+                   (p0[2]-p1[2])*(p0[2]-p1[2]) );
+
+  return distance;
+}
+
+void print_results(){
+
+  double distance;
+  for(size_t i = 0; i<max_index; ++i){
+    if(distance_arr[i] > 0){
+      distance = i/100.0;
+      printf("%5.2f %d\n", distance, distance_arr[i]);
+    }
+  }
+  printf("Number of blocks used: %d\n", number_of_blocks);
+  
+}
