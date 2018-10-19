@@ -13,7 +13,7 @@ Global variable are initialized such as FILE-pointer and number of threads. We h
 
 + We then read the number of line (=number of cells) using the function count_lines() which uses fseek and ftell.
 
-+ The elements in the distance array (cointaining 100*20*sqrt(3) elements) will all be set to zero using calloc.
++ The elements in the distance array (cointaining 100$\times$20$\times$$\sqrt{3}$+5 elements, 5 being some extra margin) will all be set to zero using calloc.
 
 + The blocksize is now evaluated, and if the file is larger than 900 Mb we will divide it into an approtiate amout of blocks, so that the program does not comsume more than 1 GiBi of memory. However if the file is smaller than 900 Mb, it will be parsed in its entirety.
 
@@ -24,5 +24,5 @@ The two important statement here are the dynamic schedule and the reduction.
 <ul> <li>Dynamic scheduling is making the program faster, because we calculate an decreasing number of elements each for each row. The default scheduling is static meaning that the first thread would have gotten the first rows which are much more computationally expensive than the last rows. By using dynamic scheduling the API will assign threads and when a thread is finised it will start on another row and therefore divive the computations more equally.</li>
 
 <li> The reduction is a solution to compute a sum (in our case an array of sums) that is shared by all parallel threads. What reduction does is simply create an local distance_array for eac thread, do what comupations is assigned to the threads and after all threds are done it will summ up all of the local arrays into the global distance_array.</li></ul> 
-
 </ul>
+
