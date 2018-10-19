@@ -32,35 +32,17 @@ The two important statement here are the dynamic schedule and the reduction.
 
 We'll take a quick review of what we tried out and changed to make the code faster.The two big differences was as mentioned in previous chapter the dynamic scheduing and the reduction.
 
-Since we should only count the distances in one direction (i.e. distance i to j is the same as from j to i) we were able to remove one half of the iterations in the inner loop, can also remove the iteration i=j since it is only calulation the distans to itself. The inner for loop statments are therefore: <pre><code>for(size_t j = i+1; j<end_index; ++j) </pre></code>. As you can see the first iterations of i, almost all column will be calculated and in the last iterations of i only a few elements will be caulculated. By default, OpenMP chose the static sheduling which will give thread one, the first "row / number of theads" treads and so on. By doing so, the last thread will finish almost immediately while the first thread will almost do the same number of calculations as before we reduced the number of calucations by more than half. This is why we implement the dynamic scheduling, which will assign each thread a new iteration whenever it finished, thus making each thread do almost the same amount of calculations. By implementing the dynamic scheduling, we were able to speed up the computations by 40-50 %.
+Since we should only count the distances in one direction (i.e. distance i to j is the same as from j to i) we were able to remove one half of the iterations in the inner loop, can also remove the iteration i=j since it is only calulation the distans to itself. The inner for loop statments are therefore: <pre><code>for(size_t j = i+1; j<end_index; ++j) </pre></code>. As you can see the first iterations of i, almost all column will be calculated and in the last iterations of i only a few elements will be caulculated. By default, OpenMP chose the static sheduling which will give thread one, the first "row / number of theads" treads and so on. By doing so, the last thread will finish almost immediately while the first thread will almost do the same number of calculations as before we reduced the number of calucations by more than half. This is why we implement the dynamic scheduling, which will assign each thread a new iteration whenever it finished, thus making each thread do almost the same amount of calculations. By implementing the dynamic scheduling, we were able to speed up the computations by more than 50 %.
 
 Before we tried the reduction, we tried out the <pre><code>#pragma omp critical</pre></code> over the glocal_distance array. For each update in the distance array the thread will access it, lock it such that no other thread can write to it, update the distance array and then unlock it. It is quite obvious that this isn't a good solution when using several threads. By going from the "critial"-solution to the "redution"-solution we reduced the speed of computations by a factor of 10.
 
 
-THINGS WE NEED TO MENTION (FROM WEBPAGE):
+<h2> Other comments </h2>
 
-Here is a list of observations and questions that can help you designing a good solution to this subtask.
+One could also tackle the problem with allocating too much space by saving the cell coordinates as smaller interger type. Then when calculating the distance we'd have to transform it back to a float.
 
-    Given the fixed point format for input and output, floating point data types are not necessarily the optimal one. What other data types would be alternatives?
+One thing that could perhaps improve our performance is taking a closer look at parsing the file. We are using fscanf in the main thread and iterating through every line. Instead of finding arbitrary floats with fscanf we could have used that fact that we knew how the input looked like. Then converting each input from character to interger by using ASCII values. 
 
-    When using another data type to store input and output, it is necessary to convert to float to compute square roots. How large is the incured performance loss?
+Balancing these first two aspects yields a read size that is bad for memory locality when iterating through pairs of cells. So you also have to employ a technique to improve locality in the iteration.
 
-    The choice of output format impacts the way how distance counts can be stored. What is the most efficient way of recording distance counts that you can think of?
-
-Parsing the file
-
-When parsing the file or parts of it, it is a huge advantage to benefit from the fixed input format. The following observations and questions can guide your implementation.
-
-    How are strings encoded in C? Recall that this was already an important aspect in Assignment 2.
-
-    Is there a connection between the value of a digit (as a character) and the numerical value that is represents? How can that be used to parse efficiently a string of the form “+15.023”?
-
-Memory management
-
-There are three aspects of memory management that you have to balance. Recall that block iteration was a technique you saw in the lectures.
-
-    File access is relatively time consuming. In particular, latency is relatively high. So you want to avoid reading from file frequently.
-
-    A large number of cells would not fit into 1 GiBi of memory, so you have to reload at times. The functions fseek and ftell allow you to navigate inside of a file.
-
-    Balancing these first two aspects yields a read size that is bad for memory locality when iterating through pairs of cells. So you also have to employ a technique to improve locality in the iteration.
+One can improve the locality by allocating a block twice as large. Then divide it into two, representing two different block. However with we didn't see any improvement by doing this and this would perhaps not be the case with larger files.
