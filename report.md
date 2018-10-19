@@ -13,7 +13,7 @@ Global variable are initialized such as FILE-pointer and number of threads. We h
 
 + We then read the number of lines (=number of cells) using the function count_lines() which uses fseek and ftell.
 
-+ The elements in the distance array (cointaining 100 \times 20 \times \sqrt{3}+5 elements, 5 being some extra margin) will all be set to zero using calloc.
++ The elements in the distance array (cointaining $$100 \times 20 \times \sqrt{3}+5$$ elements, 5 being some extra margin) will all be set to zero using calloc.
 
 + The blocksize is now evaluated, and if the required memory to store the full contents of the file is larger than 900 Mb we will divide it into an approtiate amout of blocks, so that the program does not comsume more than 1 GiBi of memory. However if the file would require less than 900 Mb, it will be parsed in its entirety.
 
