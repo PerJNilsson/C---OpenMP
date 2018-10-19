@@ -21,5 +21,4 @@ Global variable are initialized such as FILE-pointer and number of threads. We h
 
 + The distances are calculated in parallalized for loop using OpenMP. Our code before the double for loop is. <pre><code>#pragma omp parallel for schedule(dynamic) private(distance_index) reduction(:+distance_array[:max_index])  </pre></code>
 The two important statement here are the dynamic schedule and the reduction.
-
 Dynamic scheduling is making the program faster, because we calculate an decreasing number of elements each for each row. The default scheduling is static meaning that the first thread would have gotten the first rows which are much more computationally expensive than the last rows. By using dynamic scheduling the API will assign threads and when a thread is finised it will start on another row and therefore divive the computations more equally. 
