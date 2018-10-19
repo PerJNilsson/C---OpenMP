@@ -19,10 +19,10 @@ Global variable are initialized such as FILE-pointer and number of threads. We h
 
 + Should the blocksize be too large, then we'll read two parts of the file and save the coordinates into the two blocks mentioned earlier. Each block will calulate it's own distances and also the distances to the other block. We will then iterate through all combinations of block so that every distance is covered once. We use fseek and ftell to navigate through the file.
 
-<ol> <li>The distances are calculated in parallalized for loop using OpenMP. Our code before the double for loop is. <pre><code>#pragma omp parallel for schedule(dynamic) private(distance_index) reduction(:+distance_array[:max_index])  </pre></code>
+<ul> <li>The distances are calculated in parallalized for loop using OpenMP. Our code before the double for loop is. <pre><code>#pragma omp parallel for schedule(dynamic) private(distance_index) reduction(:+distance_array[:max_index])  </pre></code>
 The two important statement here are the dynamic schedule and the reduction.
-<ol> <li>Dynamic scheduling is making the program faster, because we calculate an decreasing number of elements each for each row. The default scheduling is static meaning that the first thread would have gotten the first rows which are much more computationally expensive than the last rows. By using dynamic scheduling the API will assign threads and when a thread is finised it will start on another row and therefore divive the computations more equally.</li>
+<ul> <li>Dynamic scheduling is making the program faster, because we calculate an decreasing number of elements each for each row. The default scheduling is static meaning that the first thread would have gotten the first rows which are much more computationally expensive than the last rows. By using dynamic scheduling the API will assign threads and when a thread is finised it will start on another row and therefore divive the computations more equally.</li>
 
-<li> The reduction is a solution to compute a sum (in our case an array of sums) that is shared by all parallel threads. What reduction does is simply create an local distance_array for eac thread, do what comupations is assigned to the threads and after all threds are done it will summ up all of the local arrays into the global distance_array.</li></ol> 
+<li> The reduction is a solution to compute a sum (in our case an array of sums) that is shared by all parallel threads. What reduction does is simply create an local distance_array for eac thread, do what comupations is assigned to the threads and after all threds are done it will summ up all of the local arrays into the global distance_array.</li></ul> 
 
-</ol>
+</ul>
